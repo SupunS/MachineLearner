@@ -46,7 +46,7 @@ public class Kmeans extends Unsupervised {
 	public enum distanceMeasure {CHEBYSHEV_DISTANCE , COSINE_DISTANCE , EUCLIDEAN_DISTANCE , MAHALANOBIS_DISTANCE , 
 		MANHATTAN_DISTANCE , MINKOWSKI_DISTANCE , SQUARED_EUCLIDEAN_DISTANCE , TANIMOTO_DISTANCE , WEIGHTED_MANHATTAN_DISTANCE};
 
-	public Kmeans(int clusters,distanceMeasure meassure) {
+	public Kmeans(int clusters,distanceMeasure meassure) throws IOException {
 		logger = Logger.getLogger(Kmeans.class);
 		configuration = new Configuration();
 		try {
@@ -86,6 +86,7 @@ public class Kmeans extends Unsupervised {
 			}
         } catch (IOException e) {
         	logger.error("Failed to create filesystem configurations.");
+        	throw e;
         }		
 	}
 	
@@ -93,12 +94,13 @@ public class Kmeans extends Unsupervised {
 	 * Create K-clusters taking k-random points from the input data as the initial centroids.
 	 */
 	@Override
-    public void run(List<Vector> featureSet, int passes) {
-		//create sequence file from the input data 
-		createSequenceFiles(featureSet,inputSequence,configuration,fileSystem);
+    public void run(List<Vector> featureSet, int passes) throws Exception {
 		Random random = new Random();
 		Writer writer;
         try {
+    		//create sequence file from the input data 
+        	createSequenceFiles(featureSet,inputSequence,configuration,fileSystem);
+        	
         	writer = new SequenceFile.Writer(fileSystem, configuration,initialClusters, Text.class, Kluster.class);
         	//initialize the centroids of the k-clusters
         	for (int count = 0; count < k; count++) {
@@ -115,15 +117,18 @@ public class Kmeans extends Unsupervised {
 	        logger.info("Successfully created clusters. Saved to file: "+outputClusters+"/"+Kluster.CLUSTERED_POINTS_DIR+"/part-m-00000");
         } catch (Exception e) {
 	        logger.error("Failed to create clusters.");
+	        throw e;
         }
     }
 
 	/*
 	 * Print the clusters to which each data set belongs.
+	 *  
+	 *  TODO replace system.out.println() with a proper output printing method.
 	 */
 	@Override
-    public void getOutput() {
-		SequenceFile.Reader reader;
+    public void getOutput() throws IOException {
+		SequenceFile.Reader reader = null;
 		//set the path of the final clusters file
 		String output=outputClusters+"/"+Kluster.CLUSTERED_POINTS_DIR+"/part-m-00000";
         try {
@@ -135,29 +140,11 @@ public class Kmeans extends Unsupervised {
 			while (reader.next(key,value)) {
 				System.out.println(" --> cluster "+ key.toString());
 			}
-			reader.close();
         } catch (IOException e) {
         	logger.error("Failed to read clusters from file: "+output);
+        	throw e;
+        } finally {
+        	reader.close();
         }
     }
-
-	@Override
-	public void createSequenceFiles(List<Vector> featureSet,Path output,Configuration configuration,FileSystem fileSystem) {
-		Writer sequenceFileWriter;
-        try {
-        	sequenceFileWriter = new SequenceFile.Writer(fileSystem, configuration, output , Text.class, VectorWritable.class);
-			VectorWritable writableVector = new VectorWritable();
-			//create the vector and write to the sequence file
-			for (int index=0 ; index<featureSet.size() ; index++) {
-				NamedVector dataVector = new NamedVector(featureSet.get(index), String.valueOf(index));
-				writableVector.set(dataVector);
-				sequenceFileWriter.append(new Text(dataVector.getName()), writableVector);
-			}
-			sequenceFileWriter.close();
-        } catch (IOException e) {
-        	e.printStackTrace();
-        	logger.error("Failed to create sequence files.");
-        }
-        logger.info("Successfully wrote sequence files to: " +output.toString());
-	}
 }

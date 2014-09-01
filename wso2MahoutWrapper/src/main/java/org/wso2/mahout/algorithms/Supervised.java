@@ -6,10 +6,10 @@ import org.apache.mahout.math.Vector;
 
 public interface Supervised {
 	
-	public void train(List <Integer> indexSet, List <Integer> responseSet , List <Vector> featureSet, int passes);
+	public void train(List <Integer> indexSet, List <Integer> responseSet , List <Vector> featureSet, int passes) throws Exception;
 	
-	public void test(List <Integer> responseSet , List <Vector> featureSet);
+	public void test(List <Integer> responseSet , List <Vector> featureSet) throws Exception;
 	
-	public void export(String exportPath);
+	public void export(String exportPath) throws Exception;
 	
 }

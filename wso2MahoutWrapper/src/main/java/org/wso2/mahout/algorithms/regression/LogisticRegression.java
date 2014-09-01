@@ -36,7 +36,7 @@ public class LogisticRegression implements Supervised {
 	/*
 	 * Create a Regression Model object using an existing model file.
 	 */
-	public LogisticRegression(String path) throws IOException{
+	public LogisticRegression(String path) throws Exception{
 		logger = Logger.getLogger(LogisticRegression.class);
 		FileInputStream fileInputStream = null;
 		LogisticRegressionModel LRmodelObject = null;
@@ -58,8 +58,10 @@ public class LogisticRegression implements Supervised {
         } catch (FileNotFoundException e) {
         	logger.error("Invalid model file: "+path);
         	logger.error("Failed to create a model!");
+        	throw e;
         } catch (ClassNotFoundException e) {
         	logger.error("Invalid Object type. Failed to create a model.");
+        	throw e;
         }finally{
         	fileInputStream.close();
 			objectInputStream.close();
@@ -119,7 +121,7 @@ public class LogisticRegression implements Supervised {
 	 * Since OnlineLogisticModel object is not serializable, a custom serializable object that can store the details of the trained model is created,
 	 * and then that custom object is written to a binary file. 
 	 */
-	public void export(String exportPath){
+	public void export(String exportPath) throws Exception{
 		//create a weights matrix
   	    double [][] weights = new double[model.getBeta().numRows()][model.getBeta().numCols()];
   	    //populate it with model's weights
@@ -130,16 +132,19 @@ public class LogisticRegression implements Supervised {
       	}
       	//create a serializable LogisticRegressionModel object and assign the properties of the previously trained Online Logistic Regression model
       	LogisticRegressionModel modelObject = new LogisticRegressionModel(model.numFeatures(),model.numCategories(),weights, model.currentLearningRate(), model.getLambda(), 1, model.getStep(), decay);
-      	FileOutputStream fileOutStream;
+      	FileOutputStream fileOutStream = null;
+      	ObjectOutputStream objectOutStream = null;
         try {
         	//write the model to the file
 	        fileOutStream = new FileOutputStream(exportPath);
-	      	ObjectOutputStream objectOutStream = new ObjectOutputStream(fileOutStream);
+	      	objectOutStream = new ObjectOutputStream(fileOutStream);
 	      	objectOutStream.writeObject(modelObject); 
-	      	objectOutStream.close();  
-	      	fileOutStream.close();
         } catch (Exception e) {
         	logger.error("Failed to export the model to the path: "+exportPath);
+        	throw e;
+        } finally{
+	      	objectOutStream.close();  
+	      	fileOutStream.close();
         }
         logger.info("Logistic Regression model successfully exported to file: "+exportPath);
 	}
@@ -147,7 +152,7 @@ public class LogisticRegression implements Supervised {
 	
 	/*
 	 * Evaluates the model with known data. Output is predicted using the data in each row of the 
-	 * featureSet and is compared with the actual response, which is in responseSet
+	 * featureSet and is compared with the actual response, which is in responseSet.
 	 * A particular row of responseSet should contain the response corresponds to the features that
 	 * are in the same row of the featureSet.
 	 */

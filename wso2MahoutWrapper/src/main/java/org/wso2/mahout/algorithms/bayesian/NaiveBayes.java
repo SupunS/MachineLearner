@@ -27,17 +27,18 @@ public class NaiveBayes implements Supervised {
 	private String labelIndexFile=output+"/labelIndex";
 	private String summaryFile=output+"/summary";
 
-	public NaiveBayes() {
+	public NaiveBayes() throws IOException {
 		logger = Logger.getLogger(NaiveBayes.class);
 		configuration = new Configuration();
 		try {
 	        fileSystem = FileSystem.get(configuration);
         } catch (IOException e) {
         	logger.error("Failed to load fileSystem configurations!");
+        	throw e;
         }
 	}
 	
-    public void train(List<Integer> indexSet, List<Integer> responseSet, List<Vector> featureSet, int passes) {
+    public void train(List<Integer> indexSet, List<Integer> responseSet, List<Vector> featureSet, int passes) throws Exception {
 		TrainNaiveBayesJob trainer = new TrainNaiveBayesJob();
 		trainer.setConf(configuration);
 		//create the sequence file using the input data
@@ -49,10 +50,11 @@ public class NaiveBayes implements Supervised {
 			trainer.run(parameters);
 		} catch (Exception e) {
 			logger.error("Failed to train a Naive Bayes model!");
+			throw e;
 		}	    
     }
 
-    public void test(List<Integer> responseSet, List<Vector> featureSet) {
+    public void test(List<Integer> responseSet, List<Vector> featureSet) throws Exception {
 		TestNaiveBayesDriver test = new TestNaiveBayesDriver();
 		test.setConf(configuration);
 		//set the path to sequence file, model file, labeled-index file and the path to the output summary file
@@ -62,6 +64,7 @@ public class NaiveBayes implements Supervised {
 			test.run(parameters);
 		} catch (Exception e) {
 			logger.error("Failed to validate the created Naive Bayes model!");
+			throw e;
 		}	    
     }
 
@@ -69,8 +72,8 @@ public class NaiveBayes implements Supervised {
 	    // TODO Auto-generated method stub	    
     }
 	
-	private void createSequenceFiles(List<Integer> responseSet, List<Vector> featureSet,String output) {
-		Writer sequenceFileWriter;
+	private void createSequenceFiles(List<Integer> responseSet, List<Vector> featureSet,String output) throws IOException {
+		Writer sequenceFileWriter = null;
         try {
         	sequenceFileWriter = new SequenceFile.Writer(fileSystem, configuration, new Path(output), Text.class, VectorWritable.class);
 			Text key = new Text();
@@ -85,9 +88,11 @@ public class NaiveBayes implements Supervised {
 				//append the feature vector to the sequence file, having response as the key
 				sequenceFileWriter.append(key, writableVector);
 			}
-			sequenceFileWriter.close();
         } catch (IOException e) {
         	logger.error("Failed to create sequence files!");
+        	throw e;
+        } finally{
+        	sequenceFileWriter.close();
         }
 	}
 }

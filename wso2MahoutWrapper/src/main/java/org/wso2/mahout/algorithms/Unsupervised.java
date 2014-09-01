@@ -21,8 +21,8 @@ public abstract class Unsupervised {
 	/*
 	 * Creates the sequence file from the input data, to be used by the clustering algorithm
 	 */
-	public void createSequenceFiles(List<Vector> featureSet,Path output,Configuration configuration,FileSystem fileSystem) {
-		Writer sequenceFileWriter;
+	public void createSequenceFiles(List<Vector> featureSet,Path output,Configuration configuration,FileSystem fileSystem) throws IOException{
+		Writer sequenceFileWriter = null;
         try {
         	sequenceFileWriter = new SequenceFile.Writer(fileSystem, configuration, output , Text.class, VectorWritable.class);
 			VectorWritable writableVector = new VectorWritable();
@@ -33,15 +33,16 @@ public abstract class Unsupervised {
 				writableVector.set(dataVector);
 				sequenceFileWriter.append(new Text(dataVector.getName()), writableVector);
 			}
-			sequenceFileWriter.close();
         } catch (IOException e) {
-        	e.printStackTrace();
         	logger.error("Failed to create sequence files.");
+        	throw e;
+        } finally{
+			sequenceFileWriter.close();
         }
         logger.info("Successfully wrote sequence files to: " +output.toString());
 	}
 	
-	public abstract void run(List <Vector> featureSet, int passes);
+	public abstract void run(List <Vector> featureSet, int passes) throws Exception;
 	
-	public abstract void getOutput();
+	public abstract void getOutput() throws IOException;
 }

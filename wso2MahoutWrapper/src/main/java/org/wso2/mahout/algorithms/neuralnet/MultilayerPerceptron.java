@@ -61,12 +61,14 @@ public class MultilayerPerceptron implements Supervised {
 	
 	/*
 	 * Train the Multilayer Perceptron model using a sets of features and their known response.
-	 * 
+	 * A particular row of responseSet should contain the response corresponds to the features that
+	 * are in the same row of the featureSet.
 	 */
     public void train(List<Integer> indexSet, List<Integer> responseSet, List<Vector> featureSet, int passes) {
 		Random random = RandomUtils.getRandom();
 		double[] dataRow;
 		Vector dataRowVector;
+		//For responses with only two categories, output layer needs only a single node
 		if(numCategories==2){
 			dataRow = new double[numFeatures+1];
 			for(int pass=0 ; pass<passes ; pass++){
@@ -87,6 +89,7 @@ public class MultilayerPerceptron implements Supervised {
     			}
 			}
 		}else{
+			//For responses with more than two categories, output layer need nodes as same as the number of response categories
 			//set the training set
 			dataRow = new double[numFeatures+numCategories];
 			for(int pass=0 ; pass<passes ; pass++){
@@ -116,6 +119,11 @@ public class MultilayerPerceptron implements Supervised {
 	 	logger.info("Multilayer Perceptron model successfully trained!");
     }
 
+    /* Evaluates the model with known data. Output is predicted using the data in each row of the 
+	 * featureSet and is compared with the actual response, which is in responseSet.
+	 * A particular row of responseSet should contain the response corresponds to the features that
+	 * are in the same row of the featureSet.
+	 */
     public void test(List<Integer> responseSet, List<Vector> featureSet) {
 		int total=0;
 		int correct=0;
@@ -144,12 +152,13 @@ public class MultilayerPerceptron implements Supervised {
 	/*
 	 * write the model to a file
 	 */
-    public void export(String exportPath) {
+    public void export(String exportPath) throws IOException {
 		model.setModelPath(exportPath);
 		try {
 			model.writeModelToFile();
 		} catch (IOException e) {
 			logger.error("Failed to export the model to the path "+exportPath);
+			throw e;
 		} finally{
 			model.close();
 		}

@@ -17,6 +17,7 @@ import org.apache.mahout.math.Vector;
 import org.wso2.mahout.algorithms.bayesian.NaiveBayes;
 import org.wso2.mahout.algorithms.clustering.Kmeans;
 import org.wso2.mahout.algorithms.clustering.Kmeans.distanceMeasure;
+import org.wso2.mahout.algorithms.regression.LogisticRegression;
 
 public class Test {
 	private static List <Vector> trainingFeatureSet = new ArrayList <Vector>();
@@ -26,7 +27,7 @@ public class Test {
 	private static int numCategories;
 	private static int numFeatures;
 	
-	public static void main(String[] args) throws IOException {
+	public static void main(String[] args) throws Exception {
 		
 		Configuration configuration = new Configuration();
 		FileSystem hdfs;
@@ -34,14 +35,14 @@ public class Test {
 	        hdfs = FileSystem.get(configuration);
 	        createDataVectors("/home/supun/Supun/data/Influencer/trainStdFull.csv",hdfs);
         } catch (Exception e) {
-	        e.printStackTrace();
+        	throw e;
         }
         
-/*		LogisticRegression LR = new LogisticRegression(numCategories, numFeatures, new L2(1));
+		LogisticRegression LR = new LogisticRegression(numCategories, numFeatures, new L2(1));
 		LR.setParameters(0.01, 0.0001, 1, 0.001, 1000);
 		LR.train(trainingIndexSet, trainingResponseSet, trainingFeatureSet, 30);
 		LR.export("/home/supun/Supun/LRModel");
-		
+/*		
 		LogisticRegression LR2 = new LogisticRegression("/home/supun/Supun/LRModel");
 		LR2.test(trainingResponseSet, trainingFeatureSet);
 
@@ -53,7 +54,7 @@ public class Test {
         
         MultilayerPerceptron MLP2 = new MultilayerPerceptron("/home/supun/Supun/MLPModel");
         MLP2.test(trainingResponseSet, trainingFeatureSet);
-*/
+
         
         Kmeans cluster= new Kmeans(5,distanceMeasure.MAHALANOBIS_DISTANCE);
         cluster.run(trainingFeatureSet, 5);
