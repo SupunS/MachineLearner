@@ -96,7 +96,7 @@ public class Kmeans extends Unsupervised {
 	@Override
     public void run(List<Vector> featureSet, int passes) throws Exception {
 		Random random = new Random();
-		Writer writer;
+		Writer writer = null;
         try {
     		//create sequence file from the input data 
         	createSequenceFiles(featureSet,inputSequence,configuration,fileSystem);
@@ -111,20 +111,22 @@ public class Kmeans extends Unsupervised {
         		//write it to the initial-clusters file
         		writer.append(new Text(cluster.getIdentifier()), cluster);
         	}
-			writer.close();
+
 			//cluster the input data
 			KMeansDriver.run(configuration, inputSequence , initialClusters, outputClusters, 0.001, passes, true, 0.1, false);
 	        logger.info("Successfully created clusters. Saved to file: "+outputClusters+"/"+Kluster.CLUSTERED_POINTS_DIR+"/part-m-00000");
         } catch (Exception e) {
 	        logger.error("Failed to create clusters.");
 	        throw e;
+        } finally{
+			writer.close();
         }
     }
 
 	/*
 	 * Print the clusters to which each data set belongs.
 	 *  
-	 *  TODO replace system.out.println() with a proper output printing method.
+	 *  TODO replace system.out.println() with an appropriate output printing method.
 	 */
 	@Override
     public void getOutput() throws IOException {
